@@ -71,6 +71,7 @@ void Tape::clearBuffer() {
 
 void Tape::printTape() {
 	//zmieniæ na czytanie w³aœciwe
+	/*
 	Record rec(0, 0, 0);
 	r_ptr = 0;
 	do {
@@ -85,6 +86,7 @@ void Tape::printTape() {
 	}
 	while (true);
 	resetCursor();
+	*/
 }
 
 void Tape::printBuffer()

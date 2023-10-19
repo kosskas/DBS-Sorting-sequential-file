@@ -1,7 +1,7 @@
 #include <iostream>
 #include "Tape.h"
 
-#define inputPath "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\rekordy11"
+#define inputPath "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\rekordy"
 #define tmp1Path "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\t1"
 #define tmp2Path "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\t2"
 #define tmp3Path "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\t3"
