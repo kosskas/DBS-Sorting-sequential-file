@@ -3,11 +3,12 @@
 #include "Tape.h"
 
 //#define inputPath "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\rekordy"
-#define inputPath "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\rekordy3"
+#define inputPath "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\rekordy2"
 #define tmp1Path "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\t1"
 #define tmp2Path "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\t2"
 #define tmp3Path "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\t3"
 using namespace std;
+
 
 
 Tape* switchTape(Tape* current, Tape* a, Tape* b);
@@ -19,6 +20,8 @@ int main() {
 * Jeœli jest nowa seria - zmieñ plik
 * Scalaj
 * Powtórz (ale do kiedy?) -> gdy zostanie jedna taœma, nie bêdzie ju¿ zmiany serii
+* 
+* Logika typu wpisz w³¹sne rekordy
 */
 
 /**Problemy
@@ -28,21 +31,18 @@ int main() {
 	Tape input(inputPath, ios::binary | ios::in | ios::out);
 	Tape t1(tmp1Path, ios::binary | ios::in | ios::out | ios::trunc);
 	Tape t2(tmp2Path, ios::binary | ios::in | ios::out | ios::trunc);
-	//Tape t3(tmp3Path, ios::binary | ios::in | ios::out | ios::trunc);
 
-	double field1 = 0.0 ,field2  = 0.0, oldField1 = 0.0, oldField2 = 0.0;
-	bool changeOfSerie = false;
+
+	int nOfPhases = 0;
+
 	bool sorted = false; //warunek koñcowy
-
-	Record rec1, rec2;
-	Tape* inputTape = &input;
-	Tape* currentTape = &t1; //swichtape
 	printf("Wejscie \n");
-	input.printRecords();
-	input.printTape();
-
 	while (true) { //jak tu bedzie sorted to output w INPUT?
-		sorted = distribute(inputTape, &t1, &t2);
+		input.printTape();
+		printf("\n");
+		sorted = distribute(&input, &t1, &t2);
+
+
 		/*
 		printf("\nT1\n");
 		t1.printTape();
@@ -52,12 +52,15 @@ int main() {
 		if (sorted) {
 			break; ///je¿eli nie wykryto zmiany taœmy - koniec sortowania!
 		}
-		merge(&t1, &t2, inputTape);
+		merge(&t1, &t2, &input);
+		nOfPhases++;
 	}
 
 	printf("\nPosortowane \n");
 	t1.printRecords();
 	t1.printTape();
+
+	printf("\nLiczba faz = %d\nLiczba zapisow = %d\nLiczba odczytow = %d", nOfPhases, nOfWrites, nOfReads);
 	return 0;
 }
 Tape* switchTape(Tape* current, Tape* a, Tape* b) {

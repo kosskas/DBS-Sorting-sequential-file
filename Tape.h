@@ -5,7 +5,10 @@
 #include "Record.h"
 using namespace std;
 
-#define BUFFSIZE 10
+#define BUFFSIZE 10//10
+
+extern int nOfReads;
+extern int nOfWrites;
 
 class Tape {
 private:
@@ -22,7 +25,7 @@ public:
 	void writeToBuff();
 	void writeToFile();
 
-	//static int loperacjidyskowych = 0;
+
 	Tape(string filename, ios_base::openmode flags);
 	Record readNext();
 	void writeRecord(Record rec);

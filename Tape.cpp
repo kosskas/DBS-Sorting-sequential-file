@@ -1,5 +1,8 @@
 #include "Tape.h"
 
+int nOfReads = 0;
+int nOfWrites = 0;
+
 Tape::Tape(string filename, ios_base::openmode flags) : filename(filename), flags(flags){
 	file = new fstream();
 	file->open(filename, flags);
@@ -37,6 +40,7 @@ void Tape::writeToBuff() {
 	printf("\n\tprzeczytano %ld\n", bytesRead);
 #endif
 	r_ptr += file->gcount();
+	nOfReads++;
 	///zero to koniec
 
 	/*
@@ -61,19 +65,19 @@ void Tape::writeToFile() {
 	streamsize bytesRead = file->write(serialRec, sizeof(Record) * w_idx);
 	w_ptr += sizeof(Record) * w_idx;
 	*/
-	// Zapamiêtaj pocz¹tkow¹ pozycjê wskaŸnika przed operacj¹ zapisu
+
 	streampos startPos = file->tellp();
 	const char* serialRec = (const char*)buffer; //serializacja rekordów
 	file->seekp(w_ptr);
 	file->write(serialRec, sizeof(Record) * w_idx);
 
 	w_ptr += sizeof(Record) * w_idx;
-
-	// Oblicz liczbê bajtów zapisanych porównuj¹c bie¿¹c¹ pozycjê wskaŸnika z pocz¹tkow¹
-	streamsize bytesWritten = file->tellp() - startPos;
 #if _DEBUG
+	streamsize bytesWritten = file->tellp() - startPos;
+
 	printf("\n\tZapisano %ld bajtow\n", bytesWritten);
 #endif
+	nOfWrites++;
 }
 
 
