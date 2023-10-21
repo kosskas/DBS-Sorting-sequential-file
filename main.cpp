@@ -1,17 +1,18 @@
 #include <iostream>
+#include <stdio.h>
 #include "Tape.h"
 
-#define inputPath "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\rekordy"
+//#define inputPath "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\rekordy"
+#define inputPath "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\rekordy3"
 #define tmp1Path "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\t1"
 #define tmp2Path "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\t2"
 #define tmp3Path "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\t3"
 using namespace std;
 
 
-Tape* switchTape(Tape* current, Tape* a, Tape* b) {
-	return current == a ? b : a;
-}
-
+Tape* switchTape(Tape* current, Tape* a, Tape* b);
+bool distribute(Tape* input, Tape* t1, Tape* t2);
+void merge(Tape* t1, Tape* t2, Tape* dest);
 int main() {
 /**
 * Dopóki jest seria - zapisuj na jednym z plików
@@ -19,81 +20,202 @@ int main() {
 * Scalaj
 * Powtórz (ale do kiedy?) -> gdy zostanie jedna taœma, nie bêdzie ju¿ zmiany serii
 */
+
+/**Problemy
+* Wczytywanie na taœmê blisko koñca pliku
+* czyszczenie bufora !!!plików tmp przed zapisem
+*/
 	Tape input(inputPath, ios::binary | ios::in | ios::out);
 	Tape t1(tmp1Path, ios::binary | ios::in | ios::out | ios::trunc);
 	Tape t2(tmp2Path, ios::binary | ios::in | ios::out | ios::trunc);
-	Tape t3(tmp3Path, ios::binary | ios::in | ios::out | ios::trunc);
+	//Tape t3(tmp3Path, ios::binary | ios::in | ios::out | ios::trunc);
 
 	double field1 = 0.0 ,field2  = 0.0, oldField1 = 0.0, oldField2 = 0.0;
 	bool changeOfSerie = false;
-	bool singleTape = true; //warunek koñcowy
+	bool sorted = false; //warunek koñcowy
 
 	Record rec1, rec2;
 	Tape* inputTape = &input;
 	Tape* currentTape = &t1; //swichtape
-
-#if _DEBUG
+	printf("Wejscie \n");
+	input.printRecords();
 	input.printTape();
-#endif
 
-	while (true) {
-		t1.resetCursor();
-		t2.resetCursor();
-		singleTape = true;
-
-
-		//dystrybucja
-		while (true) {
-			rec1 = inputTape->readNext();
-			if (inputTape->isEnd())
-				break;
-			field1 = rec1.getField();
-			if (field1 >= oldField1) {
-				oldField1 = field1;
-			}
-			else {
-
-				singleTape = false;
-				oldField1 = field1;
-				currentTape = switchTape(currentTape, &t1, &t2);
-			}
-			currentTape->writeRecord(rec1);
-#if _DEBUG
-			printf("\nZapisano %.1lf na %c", rec1.getField(), (currentTape == &t1 ? 'A' : 'B'));
-#endif
-		}
-		//zrzuæ resztê
-		t1.writeToFile();
-		t2.writeToFile();
+	while (true) { //jak tu bedzie sorted to output w INPUT?
+		sorted = distribute(inputTape, &t1, &t2);
+		/*
 		printf("\nT1\n");
-		//t1.printBuffer();
 		t1.printTape();
 		printf("\nT2\n");
-		t2.printTape();
-		t1.resetCursor();
-		t2.resetCursor();
-		///je¿eli nie wykryto zmiany taœmy - koniec sortowania! (przepisz ponownie na stary plik?? zmieñ nazwê
-		if (singleTape)
-			break;
-		//scalanie
-
-
-		bool serie1 = true, serie2 = true;
-#if _DEBUG
-		break;
-#endif
-		//sprawdz ktory plik jest eof a który nie
-
-		inputTape = &t3;
+		t2.printTape(); 
+		*/
+		if (sorted) {
+			break; ///je¿eli nie wykryto zmiany taœmy - koniec sortowania!
+		}
+		merge(&t1, &t2, inputTape);
 	}
-#if _DEBUG
 
-	//t2.printBuffer();
-#endif
-
-
+	printf("\nPosortowane \n");
+	t1.printRecords();
+	t1.printTape();
 	return 0;
 }
+Tape* switchTape(Tape* current, Tape* a, Tape* b) {
+	return current == a ? b : a;
+}
+
+bool distribute(Tape* inputTape, Tape* t1, Tape* t2) {
+	double field = 0.0, oldField = 0.0;
+	Record rec;
+	Tape* currentTape = t1; //swichtape
+	bool sorted = true;
+		//dystrybucja
+	while (true) {
+		rec = inputTape->readNext();
+		if (rec.isEmpty())
+			break;
+		field = rec.getField();
+		if (field >= oldField) {
+			oldField = field;
+		}
+		else {
+
+			sorted = false;
+			oldField = field;
+			currentTape = switchTape(currentTape, t1, t2);
+		}
+		currentTape->writeRecord(rec);
+#if _DEBUG
+		printf("\nZapisano %.1lf na %c", rec.getField(), (currentTape == t1 ? 'A' : 'B'));
+#endif
+	}
+	//zrzuæ resztê
+	t1->writeToFile();
+	t2->writeToFile();
+
+	t1->clearBuffer();
+	t2->clearBuffer();
+
+	inputTape->clearFile();
+	return sorted;
+}
+
+void merge(Tape* t1, Tape* t2, Tape* dest) {
+	bool serie1 = true, serie2 = true;
+	double field1 = 0.0, field2 = 0.0, oldField1 = 0.0, oldField2 = 0.0;
+	Record rec1, rec2;
+	rec1 = t1->readNext();
+	rec2 = t2->readNext();
+	while (true) {
+		//scalaj seriami
+		field1 = field2 = oldField1 = oldField2 = 0.0;
+		serie1 = serie2 = true;
+
+		if (rec1.isEmpty() && rec2.isEmpty()) {
+			break;
+		}
+
+		//seria
+		while (!(rec1.isEmpty() || rec2.isEmpty())) {
+			if (rec1.getField() <= rec2.getField()) {
+				oldField1 = rec1.getField();
+
+				dest->writeRecord(rec1);
+#if _DEBUG
+				printf("Zapisano %lf \n", rec1.getField());
+#endif
+				rec1 = t1->readNext();
+
+				if (rec1.getField() < oldField1) {
+					serie1 = false;
+					break;
+				}
+
+			}
+			else {
+				oldField2 = rec2.getField();
+				dest->writeRecord(rec2);
+#if _DEBUG
+				printf("Zapisano %lf \n", rec2.getField());
+#endif
+				rec2 = t2->readNext();
+
+				if (rec2.getField() < oldField2) {
+					serie2 = false;
+					break;
+				}
+
+			}
+		}
+		if (!serie2) {
+			while (serie1) {
+				dest->writeRecord(rec1);
+				oldField1 = rec1.getField();
+#if _DEBUG
+				printf("Dopisano %lf \n", rec1.getField());
+#endif
+				rec1 = t1->readNext();
+				if (rec1.getField() < oldField1) {
+					serie1 = false;
+					break;
+				}
+
+			}
+		}
+		else if (!serie1) {
+			while (serie2) {
+				oldField2 = rec2.getField();
+				dest->writeRecord(rec2);
+#if _DEBUG
+				printf("Dopisano %lf \n", rec2.getField());
+#endif
+				rec2 = t2->readNext();
+
+				if (rec2.getField() < oldField2) {
+					serie2 = false;
+					break;
+				}
+
+			}
+		}
+		else {
+			//koniec któregoœ z plików
+			if (rec1.isEmpty()) {
+				while (!rec2.isEmpty()) {
+					dest->writeRecord(rec2);
+#if _DEBUG
+					printf("Na koniec Zapisano %lf \n", rec2.getField());
+#endif
+					rec2 = t2->readNext();
+				}
+			}
+			else {
+				while (!rec1.isEmpty()) {
+					dest->writeRecord(rec1);
+#if _DEBUG
+					printf("Na koniec Zapisano %lf \n", rec1.getField());
+#endif
+					rec1 = t1->readNext();
+				}
+			}
+		}
+	}
+#if _DEBUG
+	dest->printBuffer();
+#endif
+	dest->writeToFile();
+#if _DEBUG
+	dest->printTape();
+#endif
+	dest->clearBuffer();
+	t1->clearFile();
+	t2->clearFile();
+
+	//printf("\nkoniec etapu scalania\n");
+}
+
+
+
 /*
 * seekp
 * seekg
@@ -102,74 +224,4 @@ int main() {
 https://cplusplus.com/reference/istream/istream/seekg/
 https://cplusplus.com/reference/fstream/fstream/
 https://stackoverflow.com/questions/55598861/stdfstream-read-block-of-data-from-file-and-write-data-back-to-file-until-eof
-
-
-	//for (Record rec = t1.readNext(); !rec.isEmpty(); rec = t1.readNext()) {
-	//	t2.writeRecord(rec);
-	//}
-	//t1.resetCursor();
-	//t2.resetCursor();
-
-	//printf("T2\n");
-	//while (!(rec = t2.readNext()).isEmpty()) {
-	//	printf("%d %d %d\n", rec.a, rec.b, rec.h);
-	//}
-*/
-
-/*
-
-
-while (true) {
-		t1.resetCursor();
-		t2.resetCursor();
-		singleTape = true;
-		//dystrybucja
-		while (!inputTape->isEnd()) {
-			rec1 = inputTape->readNext();
-			field1 = rec1.getField();
-			if (field1 >= oldField1) {
-				oldField1 = field1;
-			}
-			else {
-
-				singleTape = false;
-				oldField1 = field1;
-				currentTape = switchTape(currentTape, &t1, &t2);
-			}
-
-			currentTape->writeRecord(rec1);
-#if _DEBUG
-			printf("\nZapisano %.1lf na %c", rec1.getField(), (currentTape == &t1 ? 'A' : 'B'));
-#endif
-		}
-
-		t1.resetCursor();
-		t2.resetCursor();
-		///je¿eli nie wykryto zmiany taœmy - koniec sortowania! (przepisz ponownie na stary plik?? zmieñ nazwê
-		if (singleTape)
-			break;
-
-#if _DEBUG
-		printf("\nT1\n");
-		while (!t1.isEnd()) {
-			rec1 = t1.readNext();
-			printf("%.1lf ", rec1.getField());
-		}
-		printf("\nT2\n");
-		while (!t2.isEnd()) {
-			rec2 = t2.readNext();
-			printf("%.1lf ", rec2.getField());
-		}
-		t1.resetCursor();
-		t2.resetCursor();
-#endif
-		//scalanie
-		bool serie1 = true, serie2 = true;
-#if _DEBUG
-		break;
-#endif
-		//sprawdz ktory plik jest eof a który nie
-
-		inputTape = &t3;
-	}
 */

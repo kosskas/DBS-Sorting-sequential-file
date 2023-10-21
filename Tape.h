@@ -6,9 +6,12 @@
 using namespace std;
 
 #define BUFFSIZE 10
+
 class Tape {
 private:
 	fstream *file;
+	string filename;
+	ios_base::openmode flags;
 	uint32_t r_ptr;
 	uint32_t w_ptr;
 	uint32_t r_idx;
@@ -24,11 +27,14 @@ public:
 	Record readNext();
 	void writeRecord(Record rec);
 	void resetCursor();
-	bool isEnd();
+	bool isEndOfBuffer();
 	void resetBufferPtr();
 	void clearBuffer();
+	void clearFile();
 	void printTape();
+	void printRecords();
 	void printBuffer();
+	void resetFlags();
 	//
 	~Tape();
 };
