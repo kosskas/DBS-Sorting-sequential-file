@@ -110,7 +110,7 @@ void Tape::clearFile() {
 
 void Tape::printTape() {
 	//czytanie niew³aœciwe
-	/*
+	
 	Record rec(0, 0, 0);
 	r_ptr = 0;
 	do {
@@ -125,10 +125,12 @@ void Tape::printTape() {
 	}
 	while (true);
 	resetCursor();
-	*/
+	
+	/*
 	//czytanie w³aœciwe
 	r_ptr = 0;
 	resetBufferPtr();
+
 	Record rec(0, 0, 0);
 	while (true) {
 		rec = readNext();
@@ -139,6 +141,7 @@ void Tape::printTape() {
 	resetCursor();
 	clearBuffer();
 	resetBufferPtr();
+	*/
 }
 
 void Tape::printRecords() {

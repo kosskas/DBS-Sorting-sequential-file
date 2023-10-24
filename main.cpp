@@ -1,66 +1,127 @@
 #include <iostream>
-#include <stdio.h>
+#include <string>
 #include "Tape.h"
+#include <math.h>
+#define inputPath "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\rekordy"
+#define tmp1Path "t1"
+#define tmp2Path "t2"
 
-//#define inputPath "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\rekordy"
-#define inputPath "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\rekordy2"
-#define tmp1Path "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\t1"
-#define tmp2Path "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\t2"
-#define tmp3Path "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\t3"
 using namespace std;
 
-
+//rec -1 bo liczony takze pusty
+int r = 0,nOfRecords = 0, firstRun = 1;
 
 Tape* switchTape(Tape* current, Tape* a, Tape* b);
 bool distribute(Tape* input, Tape* t1, Tape* t2);
 void merge(Tape* t1, Tape* t2, Tape* dest);
-int main() {
-/**
-* Dopóki jest seria - zapisuj na jednym z plików
-* Jeœli jest nowa seria - zmieñ plik
-* Scalaj
-* Powtórz (ale do kiedy?) -> gdy zostanie jedna taœma, nie bêdzie ju¿ zmiany serii
-* 
-* Logika typu wpisz w³¹sne rekordy
-*/
 
-/**Problemy
-* Wczytywanie na taœmê blisko koñca pliku
-* czyszczenie bufora !!!plików tmp przed zapisem
-*/
-	Tape input(inputPath, ios::binary | ios::in | ios::out);
+int main(int argc, char** argv) {
+	/**
+	* Dopóki jest seria - zapisuj na jednym z plików
+	* Jeœli jest nowa seria - zmieñ plik
+	* Scalaj
+	* Powtórz (ale do kiedy?) -> gdy zostanie jedna taœma, nie bêdzie ju¿ zmiany serii
+	*
+	* Argumenty do maina
+	* help -h
+	* Logika typu wpisz w³¹sne rekordy -o
+	* wyœwietl przed i po sortowaniu -s
+	* wyœwietl po ka¿dym etapie sortowania -r
+	*
+	* nazwa pliku testowego na koñcu -f
+	*/
+	///zmieñ posortowanego na input
+	//usuñ tmpki
+
+	/**Problemy
+	* Wczytywanie na taœmê blisko koñca pliku
+	* czyszczenie bufora !!!plików tmp przed zapisem
+	*/
+
+	bool ownRec = false, eachStep = false, begEnd = false;
+	string fileName = "";
+	
+	if (argc == 1) {
+		printf("Usage:\n-h - help\n-o - write own records until q is pressed\n-s - show file before sorting and after\n-r - show file after every run\n-f FILENAME - run own test file");
+		return 1;
+	}
+
+	for (int i = 1; i < argc; i++) {
+		string opt(argv[i]);
+		if (opt == "-f" && i + 1 < argc) {
+			fileName = argv[i + 1];
+			i++;
+		}
+		if (opt == "-o") {
+			ownRec = true;
+			fileName = "temp";
+		}
+		if (opt == "-s")
+			begEnd = true;
+		if (opt == "-r")
+			eachStep = true;
+		if (opt == "-h") {
+			printf("Usage:\n-h - help\n-o - write own records until q is pressed\n-s - show file before sorting and after\n-r - show file after every run\n-f FILENAME - run own test file");
+			return 1;
+		}
+	}
+	
+	Tape input(fileName, ios::binary | ios::in | ios::out | (ownRec ? 16 : 0));
 	Tape t1(tmp1Path, ios::binary | ios::in | ios::out | ios::trunc);
 	Tape t2(tmp2Path, ios::binary | ios::in | ios::out | ios::trunc);
-
+	
+	if (ownRec) {
+		fileName = "temp";
+		char cmd;
+		int a, b, h;
+		printf("\nWrite r X X X to put record\nWrite 'q' to end\n");
+		while (true) {
+			cin >> cmd;
+			if (cmd == 'q') {
+				break;
+			}
+			if (cmd == 'r') {
+				cin >> a >> b >> h;
+				input.writeRecord(Record(a, b, h));
+			}		
+		}
+		input.writeToFile();
+	}
+	
 
 	int nOfPhases = 0;
-
 	bool sorted = false; //warunek koñcowy
-	printf("Wejscie \n");
-	while (true) { //jak tu bedzie sorted to output w INPUT?
+	if (begEnd) {
+		printf("Input\n");
 		input.printTape();
 		printf("\n");
+	}
+	while (true) {
+
 		sorted = distribute(&input, &t1, &t2);
-
-
-		/*
-		printf("\nT1\n");
-		t1.printTape();
-		printf("\nT2\n");
-		t2.printTape(); 
-		*/
 		if (sorted) {
 			break; ///je¿eli nie wykryto zmiany taœmy - koniec sortowania!
 		}
 		merge(&t1, &t2, &input);
 		nOfPhases++;
+		if (eachStep) {
+			printf("Phase %d\n", nOfPhases);
+			input.printTape();
+			printf("\n");
+		}
+	}
+	if (begEnd) {
+		printf("Sorted\n");
+		t1.printTape();
 	}
 
-	printf("\nPosortowane \n");
-	t1.printRecords();
-	t1.printTape();
+	printf("\nRekordow N = %d\nLiczba pocz. serii = %d\nLiczba faz r = %d\nLiczba zapisow = %d\nLiczba odczytow = %d\nWielkosc bufora b = %d",nOfRecords - 1,r, nOfPhases, nOfWrites, nOfReads, BUFFSIZE);
+	
+	double lfaz = ceil(log2(r));
+	double opdysk = 4 * nOfRecords / BUFFSIZE * lfaz;
+	printf("\nPrzypadek œredni\nMax liczba faz = %.1lf\nOcz. lic. op. dysk. = %.1lf\nRzeczywista = %d", lfaz,opdysk, nOfReads + nOfWrites);
 
-	printf("\nLiczba faz = %d\nLiczba zapisow = %d\nLiczba odczytow = %d", nOfPhases, nOfWrites, nOfReads);
+
 	return 0;
 }
 Tape* switchTape(Tape* current, Tape* a, Tape* b) {
@@ -75,6 +136,8 @@ bool distribute(Tape* inputTape, Tape* t1, Tape* t2) {
 		//dystrybucja
 	while (true) {
 		rec = inputTape->readNext();
+		if (firstRun)
+			nOfRecords++;
 		if (rec.isEmpty())
 			break;
 		field = rec.getField();
@@ -86,12 +149,20 @@ bool distribute(Tape* inputTape, Tape* t1, Tape* t2) {
 			sorted = false;
 			oldField = field;
 			currentTape = switchTape(currentTape, t1, t2);
+			if (firstRun) {
+				r++;
+			}
+
+		}
+		if (firstRun) {
+			r++;
 		}
 		currentTape->writeRecord(rec);
 #if _DEBUG
 		printf("\nZapisano %.1lf na %c", rec.getField(), (currentTape == t1 ? 'A' : 'B'));
 #endif
 	}
+	firstRun = 0;
 	//zrzuæ resztê
 	t1->writeToFile();
 	t2->writeToFile();
@@ -150,6 +221,7 @@ void merge(Tape* t1, Tape* t2, Tape* dest) {
 
 			}
 		}
+		//uzupe³nij do serii
 		if (!serie2) {
 			while (serie1) {
 				dest->writeRecord(rec1);
@@ -181,8 +253,9 @@ void merge(Tape* t1, Tape* t2, Tape* dest) {
 
 			}
 		}
+		//koniec któregoœ z plików
 		else {
-			//koniec któregoœ z plików
+
 			if (rec1.isEmpty()) {
 				while (!rec2.isEmpty()) {
 					dest->writeRecord(rec2);
@@ -213,8 +286,6 @@ void merge(Tape* t1, Tape* t2, Tape* dest) {
 	dest->clearBuffer();
 	t1->clearFile();
 	t2->clearFile();
-
-	//printf("\nkoniec etapu scalania\n");
 }
 
 
