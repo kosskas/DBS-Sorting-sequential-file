@@ -33,4 +33,7 @@
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="generateRecords.py" />
+  </ItemGroup>
 </Project>

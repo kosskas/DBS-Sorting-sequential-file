@@ -43,19 +43,6 @@ void Tape::writeToBuff() {
 	nOfReads++;
 	///zero to koniec
 
-	/*
-	file->seekg(r_ptr);
-	if (file->read((char*)buffer, sizeof(buffer))) {
-		printf("\n\tprzeczytano %ld\n", file->gcount());
-		r_ptr += file->gcount();
-	}
-	else {
-		//clearBuffer();
-		end = true;
-	}
-	*/
-
-
 }
 
 void Tape::writeToFile() {
@@ -109,7 +96,7 @@ void Tape::clearFile() {
 }
 
 void Tape::printTape() {
-	//czytanie niew³aœciwe
+	//czytanie niebuforowane
 	
 	Record rec(0, 0, 0);
 	r_ptr = 0;
@@ -127,7 +114,7 @@ void Tape::printTape() {
 	resetCursor();
 	
 	/*
-	//czytanie w³aœciwe
+	//czytanie buforowane
 	r_ptr = 0;
 	resetBufferPtr();
 
