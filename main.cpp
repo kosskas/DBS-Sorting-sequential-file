@@ -2,7 +2,7 @@
 #include <string>
 #include "Tape.h"
 #include <math.h>
-#define inputPath "D:\\PG\\5sys\\Struktury baz danych\\Projekt\\record_gen\\rekordy"
+
 #define tmp1Path "t1"
 #define tmp2Path "t2"
 
@@ -15,14 +15,10 @@ Tape* switchTape(Tape* current, Tape* a, Tape* b);
 bool distribute(Tape* input, Tape* t1, Tape* t2);
 void merge(Tape* t1, Tape* t2, Tape* dest);
 
+void getInputToFile();
 int main(int argc, char** argv) {
-/*
-- o nie ma korzystaæ z bufora,od razu do pliku
-pewne cleary siê powtarzaj¹
-*/
-
 	bool ownRec = false, eachStep = 0, begEnd = 0;
-	string fileName = "";//"D:\\PG\\5sys\\Struktury baz danych\\Projekt\\Project1\\Release\\test1";
+	string fileName = "";
 	
 	if (argc == 1) {
 		printf("Usage:\n-h - help\n-o - write own records until q is pressed\n-s - show file before sorting and after\n-r - show file after every run\n-f FILENAME - run own test file");
@@ -36,7 +32,7 @@ pewne cleary siê powtarzaj¹
 			i++;
 		}
 		if (opt == "-o") {
-			ownRec = true;
+			getInputToFile();
 			fileName = "temp";
 		}
 		if (opt == "-s")
@@ -49,11 +45,11 @@ pewne cleary siê powtarzaj¹
 		}
 	}
 	
-	//ownRec = 1;
 	Tape input(fileName, ios::binary | ios::in | ios::out );
 	Tape t1(tmp1Path, ios::binary | ios::in | ios::out | ios::trunc);
 	Tape t2(tmp2Path, ios::binary | ios::in | ios::out | ios::trunc);
-	cout << "\n\n" << fileName;
+
+	printf("\n\n");
 	int nOfPhases = 0;
 	bool sorted = false; //warunek koñcowy
 	if (begEnd) {
@@ -79,11 +75,11 @@ pewne cleary siê powtarzaj¹
 		printf("Sorted\n");
 		t1.printTape();
 	}
-	printf("\nRekordow N = %d\nLiczba pocz. serii = %d\nLiczba faz r = %d\nLiczba zapisow = %d\nLiczba odczytow = %d\nWielkosc bufora b = %d", nOfRecords - 1, r, nOfPhases, nOfWrites, nOfReads, BUFFSIZE);
+	printf("\nRecords N = %d\nInitial series = %d\nPhases r = %d\nWrites = %d\nReads = %d\nBuffer size b = %d", nOfRecords - 1, r, nOfPhases, nOfWrites, nOfReads, BUFFSIZE);
 
 	double lfaz = ceil(log2(nOfRecords/2));
 	double opdysk = 4 * nOfRecords / BUFFSIZE * lfaz;
-	printf("\nPrzypadek sredni\nTeor. liczba faz = %.1lf\nOcz. lic. op. dysk. = %.1lf\nRzeczywista = %d", lfaz,opdysk, nOfReads + nOfWrites);
+	printf("\nAvg case\nExpected phases = %.1lf\nExpected r/w = %.1lf\nReal r/w = %d", lfaz,opdysk, nOfReads + nOfWrites);
 
 
 	return 0;
@@ -151,7 +147,6 @@ void merge(Tape* t1, Tape* t2, Tape* dest) {
 				oldField1 = rec1.getField();
 				dest->writeRecord(rec1);
 				rec1 = t1->readNext();
-
 				if (rec1.getField() < oldField1) {
 					serie1 = false;
 					break;
@@ -161,9 +156,7 @@ void merge(Tape* t1, Tape* t2, Tape* dest) {
 			else {
 				oldField2 = rec2.getField();
 				dest->writeRecord(rec2);
-
 				rec2 = t2->readNext();
-
 				if (rec2.getField() < oldField2) {
 					serie2 = false;
 					break;
@@ -215,4 +208,17 @@ void merge(Tape* t1, Tape* t2, Tape* dest) {
 	dest->clearBuffer();
 	t1->clearFile();
 	t2->clearFile();
+}
+void getInputToFile() {
+	int n, a, b, h;
+	printf("Enter number of records in file.\n");
+	cin >> n;
+
+	Tape input("temp", ios::binary | ios::in | ios::out | ios::trunc);
+	printf("Records has 3 values - (a, b, h)\n");
+	while (n--) {
+		cin >> a >> b >> h;
+		input.forceWriteRecord(Record(a, b, h));
+		printf("\tSaved Record(%d,%d,%d)\n", a, b, h);
+	}
 }

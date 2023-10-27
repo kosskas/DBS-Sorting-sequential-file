@@ -10,7 +10,6 @@ Tape::Tape(string filename, ios_base::openmode flags) : filename(filename), flag
 	w_ptr = 0;
 	r_idx = BUFFSIZE;
 	w_idx = 0;
-	end = false;
 }
 
 Record Tape::readNext() {
@@ -34,52 +33,46 @@ void Tape::writeToBuff() {
 	file->seekg(r_ptr);
 	streamsize bytesRead = file->read((char*)buffer, sizeof(buffer)).gcount();
 	if (bytesRead < sizeof(buffer)) {
-		memset((char*)buffer + bytesRead, 0, sizeof(buffer) - bytesRead);
+		memset((char*)buffer + bytesRead, 0, sizeof(buffer) - bytesRead); //jeœli przeczytano mniej ni¿ ca³¹ stronê, wyzeruj dalsze
 	}
 #if _DEBUG
 	printf("\n\tprzeczytano %ld\n", bytesRead);
 #endif
 	r_ptr += file->gcount();
 	nOfReads++;
-	///zero to koniec
 
 }
 
 void Tape::writeToFile() {
-	/*
-	const char* serialRec = (const char*)buffer; //serializacja rekordów
-	file->seekp(w_ptr);
-	streamsize bytesRead = file->write(serialRec, sizeof(Record) * w_idx);
-	w_ptr += sizeof(Record) * w_idx;
-	*/
-
+#if _DEBUG
 	streampos startPos = file->tellp();
+#endif
 	const char* serialRec = (const char*)buffer; //serializacja rekordów
 	file->seekp(w_ptr);
 	file->write(serialRec, sizeof(Record) * w_idx);
-
 	w_ptr += sizeof(Record) * w_idx;
+
 #if _DEBUG
 	streamsize bytesWritten = file->tellp() - startPos;
-
 	printf("\n\tZapisano %ld bajtow\n", bytesWritten);
 #endif
 	nOfWrites++;
+}
+
+void Tape::forceWriteRecord(Record rec) {
+	const char* serialRec = (const char*)&rec; //serializacja rekordu
+	file->seekp(w_ptr);
+	file->write(serialRec, sizeof(Record));
+	w_ptr += sizeof(Record);
 }
 
 
 void Tape::resetCursor() {
 	r_ptr = 0;
 	w_ptr = 0;
-	end = false;
 	file->clear();
 	file->seekg(r_ptr, ios::beg);
 	file->seekp(w_ptr, ios::beg);
-}
-
-bool Tape::isEndOfBuffer() {
-	//return file->eof();
-	return buffer[r_idx].isEmpty();
 }
 
 void Tape::clearBuffer() {	
@@ -92,7 +85,7 @@ void Tape::clearFile() {
 	file->open(filename, flags | ios::trunc);
 	resetCursor();
 	clearBuffer();
-	resetBufferPtr();
+	//resetBufferPtr();
 }
 
 void Tape::printTape() {
@@ -144,7 +137,7 @@ void Tape::printRecords() {
 	printf("\n");
 	resetCursor();
 	clearBuffer();
-	resetBufferPtr();
+	//resetBufferPtr();
 }
 
 void Tape::printBuffer()
@@ -153,11 +146,6 @@ void Tape::printBuffer()
 		printf("%.1lf ", buffer[i].getField());
 	}
 	printf("widx=%d\n", w_idx);
-}
-
-void Tape::resetFlags() {
-	resetCursor();
-	resetBufferPtr();
 }
 
 void Tape::resetBufferPtr() {
