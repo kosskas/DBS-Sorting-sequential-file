@@ -31,31 +31,21 @@ void Tape::writeRecord(Record rec) {
 void Tape::writeToBuff() {
 	//readFromFile
 	file->seekg(r_ptr);
-	streamsize bytesRead = file->read((char*)buffer, sizeof(buffer)).gcount();
+	uint32_t bytesRead = file->read((char*)buffer, sizeof(buffer)).gcount();
 	if (bytesRead < sizeof(buffer)) {
 		memset((char*)buffer + bytesRead, 0, sizeof(buffer) - bytesRead); //jeœli przeczytano mniej ni¿ ca³¹ stronê, wyzeruj dalsze
 	}
-#if _DEBUG
-	printf("\n\tprzeczytano %ld\n", bytesRead);
-#endif
-	r_ptr += file->gcount();
+	//r_ptr += file->gcount();
+	r_ptr += bytesRead;
 	nOfReads++;
 
 }
 
 void Tape::writeToFile() {
-#if _DEBUG
-	streampos startPos = file->tellp();
-#endif
 	const char* serialRec = (const char*)buffer; //serializacja rekordów
 	file->seekp(w_ptr);
 	file->write(serialRec, sizeof(Record) * w_idx);
 	w_ptr += sizeof(Record) * w_idx;
-
-#if _DEBUG
-	streamsize bytesWritten = file->tellp() - startPos;
-	printf("\n\tZapisano %ld bajtow\n", bytesWritten);
-#endif
 	nOfWrites++;
 }
 
@@ -85,7 +75,6 @@ void Tape::clearFile() {
 	file->open(filename, flags | ios::trunc);
 	resetCursor();
 	clearBuffer();
-	//resetBufferPtr();
 }
 
 void Tape::printTape() {
@@ -137,7 +126,6 @@ void Tape::printRecords() {
 	printf("\n");
 	resetCursor();
 	clearBuffer();
-	//resetBufferPtr();
 }
 
 void Tape::printBuffer()

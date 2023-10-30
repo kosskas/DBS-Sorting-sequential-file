@@ -12,11 +12,15 @@ using namespace std;
 int r = 0,nOfRecords = 0, firstRun = 1;
 
 Tape* switchTape(Tape* current, Tape* a, Tape* b);
-void distribute(Tape* input, Tape* t1, Tape* t2);
-bool merge(Tape* t1, Tape* t2, Tape* dest);
+bool distribute(Tape* input, Tape* t1, Tape* t2);
+void merge(Tape* t1, Tape* t2, Tape* dest);
 
 void getInputToFile();
 int main(int argc, char** argv) {
+
+	/*
+	KOniec warunku w merge
+	*/
 	bool ownRec = false, eachStep = 0, begEnd = 0;
 	string fileName = "";
 	
@@ -51,21 +55,21 @@ int main(int argc, char** argv) {
 
 	printf("\n\n");
 	int nOfPhases = 0;
-	
+	bool sorted = false; //warunek koñcowy
 	if (begEnd) {
 		printf("Input\n");
 		input.printTape();
 		printf("\n");
 	}
-	bool sorted = false; //warunek koñcowy
 	while (true) {
-		distribute(&input, &t1, &t2);
 
-		sorted = merge(&t1, &t2, &input);
-
-		nOfPhases++;
-		if (sorted)
+		sorted = distribute(&input, &t1, &t2);
+		if (sorted) {
 			break; ///koniec sortowania!
+		}
+		merge(&t1, &t2, &input);
+		nOfPhases++;
+
 
 		if (eachStep) {
 			printf("Phase %d\n", nOfPhases);
@@ -75,12 +79,11 @@ int main(int argc, char** argv) {
 	}
 	if (begEnd) {
 		printf("Sorted\n");
-		input.printTape();
+		t1.printTape();
 	}
-	nOfRecords -= 1; //bo liczony tak¿e pusty
-	printf("\nRecords N = %d\nInitial series = %d\nPhases r = %d\nWrites = %d\nReads = %d\nBuffer size b = %d", nOfRecords, r, nOfPhases, nOfWrites, nOfReads, BUFFSIZE);
+	printf("\nRecords N = %d\nInitial series = %d\nPhases r = %d\nWrites = %d\nReads = %d\nBuffer size b = %d", nOfRecords - 1, r, nOfPhases, nOfWrites, nOfReads, BUFFSIZE);
 
-	double lfaz = ceil(log2(nOfRecords /2));
+	double lfaz = ceil(log2(nOfRecords/2));
 	double opdysk = 4 * nOfRecords / BUFFSIZE * lfaz;
 	printf("\nAvg case\nExpected phases = %.1lf\nExpected r/w = %.1lf\nReal r/w = %d", lfaz,opdysk, nOfReads + nOfWrites);
 
@@ -91,10 +94,11 @@ Tape* switchTape(Tape* current, Tape* a, Tape* b) {
 	return current == a ? b : a;
 }
 
-void distribute(Tape* inputTape, Tape* t1, Tape* t2) {
+bool distribute(Tape* inputTape, Tape* t1, Tape* t2) {
 	double field = 0.0, oldField = 0.0;
 	Record rec;
 	Tape* currentTape = t1; //swichtape
+	bool sorted = true;
 	//dystrybucja
 	while (true) {
 		rec = inputTape->readNext();
@@ -106,6 +110,7 @@ void distribute(Tape* inputTape, Tape* t1, Tape* t2) {
 		if (field >= oldField)
 			oldField = field;
 		else {
+			sorted = false;
 			oldField = field;
 			currentTape = switchTape(currentTape, t1, t2);
 			if (firstRun) {
@@ -125,9 +130,10 @@ void distribute(Tape* inputTape, Tape* t1, Tape* t2) {
 	t2->clearBuffer();
 
 	inputTape->clearFile();
+	return sorted;
 }
 
-bool merge(Tape* t1, Tape* t2, Tape* dest) {
+void merge(Tape* t1, Tape* t2, Tape* dest) {
 	bool serie1 = true, serie2 = true;
 
 	int nOfSeries1 = 0, nOfSeries2 = 0;
@@ -156,6 +162,7 @@ bool merge(Tape* t1, Tape* t2, Tape* dest) {
 					nOfSeries1++;
 					break;
 				}
+
 			}
 			else {
 				oldField2 = rec2.getField();
@@ -167,6 +174,7 @@ bool merge(Tape* t1, Tape* t2, Tape* dest) {
 					break;
 				}
 			}
+
 		}
 		//uzupe³nij do serii
 		if (!serie2) {
@@ -195,6 +203,7 @@ bool merge(Tape* t1, Tape* t2, Tape* dest) {
 		}
 		//koniec któregoœ z plików
 		else {
+
 			if (rec1.isEmpty()) {
 				while (!rec2.isEmpty()) {
 					oldField2 = rec2.getField();
@@ -218,18 +227,16 @@ bool merge(Tape* t1, Tape* t2, Tape* dest) {
 		}
 	}
 
-	//printf("NOFSERIES t1: %d t2: %d\n", nOfSeries1, nOfSeries2);
-	
-	//je¿eli oba pliki mia³y po jednej serii lub rekordy by³y tylko na jednej z taœm (druga by³a pusta) to plik jest posortowany
-	if (nOfSeries1 <= 1 && nOfSeries2 <= 1)
+	printf("NOFSERIES t1: %d t2: %d\n", nOfSeries1, nOfSeries2);
+
+	if (nOfSeries1 == 1 && nOfSeries2 == 1)
 		sorted = true;
 
 	dest->writeToFile();
 	dest->clearBuffer();
 	t1->clearFile();
 	t2->clearFile();
-
-	return sorted;
+	//return sorted;
 }
 void getInputToFile() {
 	int n, a, b, h;

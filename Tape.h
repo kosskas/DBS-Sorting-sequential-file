@@ -5,7 +5,7 @@
 #include "Record.h"
 using namespace std;
 
-#define BUFFSIZE 16// 16 64 256 512
+#define BUFFSIZE 512// 16 64 256 512
 
 extern int nOfReads;
 extern int nOfWrites;
@@ -24,20 +24,16 @@ public:
 	void writeToBuff();
 	void writeToFile();
 	void forceWriteRecord(Record rec);
-
 	Tape(string filename, ios_base::openmode flags);
 	Record readNext();
 	void writeRecord(Record rec);
 	void resetCursor();
-	//bool isEndOfBuffer();
 	void resetBufferPtr();
 	void clearBuffer();
 	void clearFile();
 	void printTape();
 	void printRecords();
 	void printBuffer();
-	//void resetFlags();
-	//
 	~Tape();
 };
 
