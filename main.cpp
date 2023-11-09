@@ -80,7 +80,8 @@ int main(int argc, char** argv) {
 	nOfRecords -= 1; //bo liczony tak¿e pusty
 	printf("\nRecords N = %d\nInitial series = %d\nPhases r = %d\nWrites = %d\nReads = %d\nBuffer size b = %d", nOfRecords, r, nOfPhases, nOfWrites, nOfReads, BUFFSIZE);
 
-	double lfaz = ceil(log2(nOfRecords /2));
+	//double lfaz = ceil(log2(nOfRecords /2));
+	double lfaz = ceil(log2(r));
 	double opdysk = 4 * nOfRecords / BUFFSIZE * lfaz;
 	printf("\nAvg case\nExpected phases = %.1lf\nExpected r/w = %.1lf\nReal r/w = %d", lfaz,opdysk, nOfReads + nOfWrites);
 
@@ -133,7 +134,7 @@ bool merge(Tape* t1, Tape* t2, Tape* dest) {
 	int nOfSeries1 = 0, nOfSeries2 = 0;
 	bool sorted = false;
 
-	double field1 = 0.0, field2 = 0.0, oldField1 = 0.0, oldField2 = 0.0, prevField = 0.0;
+	double field1 = 0.0, field2 = 0.0, oldField1 = 0.0, oldField2 = 0.0;;
 	Record rec1, rec2;
 	rec1 = t1->readNext();
 	rec2 = t2->readNext();
