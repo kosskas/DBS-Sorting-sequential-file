@@ -5,7 +5,7 @@
 #include "Record.h"
 using namespace std;
 
-#define BUFFSIZE 16// 16 64 256 512
+#define BUFFSIZE 512// 16 64 256 512
 
 extern int nOfReads;
 extern int nOfWrites;

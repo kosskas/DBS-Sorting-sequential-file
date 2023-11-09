@@ -130,17 +130,15 @@ void distribute(Tape* inputTape, Tape* t1, Tape* t2) {
 
 bool merge(Tape* t1, Tape* t2, Tape* dest) {
 	bool serie1 = true, serie2 = true;
-
-	int nOfSeries1 = 0, nOfSeries2 = 0;
-	bool sorted = false;
-
-	double field1 = 0.0, field2 = 0.0, oldField1 = 0.0, oldField2 = 0.0;;
+	bool sorted = true;
+	double oldField1 = 0.0, oldField2 = 0.0;;
 	Record rec1, rec2;
+
 	rec1 = t1->readNext();
 	rec2 = t2->readNext();
 	while (true) {
 		//scalaj seriami
-		field1 = field2 = oldField1 = oldField2 = 0.0;
+		oldField1 = oldField2 = 0.0;
 		serie1 = serie2 = true;
 
 		if (rec1.isEmpty() && rec2.isEmpty())
@@ -154,7 +152,8 @@ bool merge(Tape* t1, Tape* t2, Tape* dest) {
 				rec1 = t1->readNext();
 				if (rec1.getField() < oldField1) {
 					serie1 = false;
-					nOfSeries1++;
+					if (!rec1.isEmpty())
+						sorted = false;
 					break;
 				}
 			}
@@ -164,7 +163,8 @@ bool merge(Tape* t1, Tape* t2, Tape* dest) {
 				rec2 = t2->readNext();
 				if (rec2.getField() < oldField2) {
 					serie2 = false;
-					nOfSeries2++;
+					if (!rec2.isEmpty())
+						sorted = false;
 					break;
 				}
 			}
@@ -177,7 +177,8 @@ bool merge(Tape* t1, Tape* t2, Tape* dest) {
 				rec1 = t1->readNext();
 				if (rec1.getField() < oldField1) {
 					serie1 = false;
-					nOfSeries1++;
+					if (!rec1.isEmpty())
+						sorted = false;
 					break;
 				}
 			}
@@ -189,7 +190,8 @@ bool merge(Tape* t1, Tape* t2, Tape* dest) {
 				rec2 = t2->readNext();
 				if (rec2.getField() < oldField2) {
 					serie2 = false;
-					nOfSeries2++;
+					if(!rec2.isEmpty())
+						sorted = false;
 					break;
 				}
 			}
@@ -201,8 +203,8 @@ bool merge(Tape* t1, Tape* t2, Tape* dest) {
 					oldField2 = rec2.getField();
 					dest->writeRecord(rec2);
 					rec2 = t2->readNext();
-					if (rec2.getField() < oldField2) {
-						nOfSeries2++;
+					if (rec2.getField() < oldField2 && !rec2.isEmpty()) {
+						sorted = false;
 					}
 				}
 			}
@@ -211,19 +213,13 @@ bool merge(Tape* t1, Tape* t2, Tape* dest) {
 					oldField1 = rec1.getField();
 					dest->writeRecord(rec1);
 					rec1 = t1->readNext();				
-					if (rec1.getField() < oldField1) {
-						nOfSeries1++;
+					if (rec1.getField() < oldField1 && !rec1.isEmpty()) {
+						sorted = false;
 					}
 				}
 			}
 		}
 	}
-
-	//printf("NOFSERIES t1: %d t2: %d\n", nOfSeries1, nOfSeries2);
-	
-	//je¿eli oba pliki mia³y po jednej serii lub rekordy by³y tylko na jednej z taœm (druga by³a pusta) to plik jest posortowany
-	if (nOfSeries1 <= 1 && nOfSeries2 <= 1)
-		sorted = true;
 
 	dest->writeToFile();
 	dest->clearBuffer();
